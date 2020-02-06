@@ -1148,12 +1148,13 @@ func TestHTTP_AgentHealth_BadServer(t *testing.T) {
 	t.Parallel()
 	require := require.New(t)
 
+	// Disable server to make server unhealthy if requested
+	cb := func(c *Config) {
+		c.Server.Enabled = false
+	}
+
 	// Enable ACLs to ensure they're not enforced
-	httpACLTest(t, nil, func(s *TestAgent) {
-
-		// Set s.Agent.server=nil to make server unhealthy if requested
-		s.Agent.server = nil
-
+	httpACLTest(t, cb, func(s *TestAgent) {
 		// No ?type= means server is just skipped
 		{
 			req, err := http.NewRequest("GET", "/v1/agent/health", nil)
@@ -1198,7 +1199,6 @@ func TestHTTP_AgentHealth_BadClient(t *testing.T) {
 
 	// Enable ACLs to ensure they're not enforced
 	httpACLTest(t, cb, func(s *TestAgent) {
-
 		// No ?type= means client is just skipped
 		{
 			req, err := http.NewRequest("GET", "/v1/agent/health", nil)
