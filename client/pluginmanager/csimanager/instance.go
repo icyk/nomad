@@ -28,6 +28,10 @@ type instanceManager struct {
 	// stored and where mount points will be created
 	mountPoint string
 
+	// containerMountPoint is the location _inside_ the plugin container that the
+	// `mountPoint` is bound in to.
+	containerMountPoint string
+
 	fp *pluginFingerprinter
 
 	volumeManager        *volumeManager
@@ -53,7 +57,8 @@ func newInstanceManager(logger hclog.Logger, updater UpdateNodeCSIInfoFunc, p *d
 			fingerprintController: p.Type == dynamicplugins.PluginTypeCSIController,
 		},
 
-		mountPoint: p.Options["MountPoint"],
+		mountPoint:          p.Options["MountPoint"],
+		containerMountPoint: p.Options["ContainerMountPoint"],
 
 		volumeManagerSetupCh: make(chan struct{}),
 
@@ -131,7 +136,7 @@ func (i *instanceManager) runLoop() {
 			if i.fp.hadFirstSuccessfulFingerprint && !i.volumeManagerSetup && i.fp.fingerprintNode {
 				i.volumeManagerMu.RUnlock()
 				i.volumeManagerMu.Lock()
-				i.volumeManager = newVolumeManager(i.logger, i.client, i.mountPoint, info.NodeInfo.RequiresNodeStageVolume)
+				i.volumeManager = newVolumeManager(i.logger, i.client, i.mountPoint, i.containerMountPoint, info.NodeInfo.RequiresNodeStageVolume)
 				i.volumeManagerSetup = true
 				close(i.volumeManagerSetupCh)
 				i.volumeManagerMu.Unlock()
