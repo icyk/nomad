@@ -1191,11 +1191,13 @@ func TestHTTP_AgentHealth_BadClient(t *testing.T) {
 	t.Parallel()
 	require := require.New(t)
 
-	// Enable ACLs to ensure they're not enforced
-	httpACLTest(t, nil, func(s *TestAgent) {
+	// Disable client to make server unhealthy if requested
+	cb := func(c *Config) {
+		c.Client.Enabled = false
+	}
 
-		// Set s.Agent.client=nil to make server unhealthy if requested
-		s.Agent.client = nil
+	// Enable ACLs to ensure they're not enforced
+	httpACLTest(t, cb, func(s *TestAgent) {
 
 		// No ?type= means client is just skipped
 		{
