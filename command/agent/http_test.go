@@ -1056,6 +1056,15 @@ func TestHTTPServer_Limits_OK(t *testing.T) {
 			defer s.Shutdown()
 
 			assertTimeout(t, s, tc.assertTimeout, tc.timeout)
+
+			// There's a race between assertTimeout(false) closing
+			// its connection and the HTTP server noticing and
+			// untracking it. Since there's no way to coordiante
+			// when this occurs, sleeping is the only way to avoid
+			// asserting limits before the timed out connection is
+			// untracked.
+			time.Sleep(1 * time.Second)
+
 			if tc.assertLimit {
 				assertLimit(t, s.Server.Addr, *tc.limit)
 			} else {
